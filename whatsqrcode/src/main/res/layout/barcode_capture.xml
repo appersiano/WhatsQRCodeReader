@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/topLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
+
+    <TextView
+        android:id="@+id/headerText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:text="Visit www.wh.com on your computer and scan the QR Code"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Visit www.wh.com on your computer and scan the QR Code" />
+
+    <com.appersiano.whatsqrcode.camera.CameraSourcePreview
+        android:id="@+id/preview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerText"
+        app:layout_constraintVertical_bias="0.0">
+
+        <com.appersiano.whatsqrcode.camera.GraphicOverlay
+            android:id="@+id/graphicOverlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <com.appersiano.whatsqrcode.FocusView
+            android:id="@+id/focusView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.appersiano.whatsqrcode.camera.CameraSourcePreview>
+
+</android.support.constraint.ConstraintLayout>
