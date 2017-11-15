@@ -20,23 +20,15 @@ import java.util.TimerTask;
 
 public class FocusView extends View {
     public static final int SCALE_UNIT_TARGET_MIDDLE_LINE = 4;
-    private Paint mTransparentPaint;
     private Paint mSemiBlackPaint;
     private Path mPath = new Path();
     private PointF[] points;
     private Paint paint;
-    private float xPad;
-    private float yPad;
-    private int screenRatio;
-    private float centerCoordX;
-    private float aFloat;
     private RectF targetRect;
     private Paint targetPaint;
-    private float centerCoordY;
     private Paint scanLine;
     private float greenAX;
     private float greenAY;
-    private float greenBX;
     private float greenBY;
     private boolean invert;
 
@@ -59,10 +51,6 @@ public class FocusView extends View {
     private void initPaints() {
         targetRect = new RectF();
 
-        mTransparentPaint = new Paint();
-        mTransparentPaint.setColor(Color.TRANSPARENT);
-        mTransparentPaint.setStrokeWidth(10);
-
         mSemiBlackPaint = new Paint();
         mSemiBlackPaint.setColor(Color.TRANSPARENT);
         mSemiBlackPaint.setStrokeWidth(10);
@@ -84,7 +72,7 @@ public class FocusView extends View {
 
     }
 
-    public void setScanLineColor(@IntegerRes int color){
+    public void setScanLineColor(@IntegerRes int color) {
         scanLine.setColor(color);
     }
 
@@ -106,7 +94,6 @@ public class FocusView extends View {
         greenAX = getWidth() / 4;
         greenAY = getHeight() / 2 - unitX;
 
-        greenBX = unitX * 3;
         greenBY = getHeight() / 2 - unitX;
     }
 
@@ -115,21 +102,18 @@ public class FocusView extends View {
         super.onDraw(canvas);
 
         mPath.reset();
+        final int scaleUnit = 6;
 
-        xPad = (float) (getPaddingLeft() + getPaddingRight());
-        yPad = (float) (getPaddingTop() + getPaddingBottom());
-        screenRatio = getHeight() / getHeight();
-        centerCoordX = (canvas.getWidth() - xPad) / 2;
-        centerCoordY = (canvas.getHeight() - yPad) / 2;
+        float unitX = canvas.getWidth() / scaleUnit;
 
-        float unitX = canvas.getWidth() / 4;
-        float unitY = canvas.getHeight() / 4;
+        float widthSize = unitX * (scaleUnit - 2);
+        //float unitY = canvas.getHeight() / 4;
 
         float pointAx = unitX;
-        float pointAy = canvas.getHeight() / 2 - unitX;
+        float pointBx = unitX * (scaleUnit - 1);
 
-        float pointBx = unitX * 3;
-        float pointBy = canvas.getHeight() / 2 + unitX;
+        float pointAy = canvas.getHeight() / 2 - (widthSize / 2);
+        float pointBy = canvas.getHeight() / 2 + (widthSize / 2);
 
 
         //Square
@@ -137,17 +121,17 @@ public class FocusView extends View {
         canvas.drawRect(targetRect, targetPaint);
 
         //draw lines
-        drawLines(canvas, unitX);
+        drawLines(canvas, unitX, widthSize);
 
 
-        if (invert){
+        //target line position logic
+        if (invert) {
             greenAX = unitX;
             greenAY = greenAY - 5;
 
-            greenBX = unitX * 3;
             greenBY = greenBY - 5;
 
-            if (greenAY <= pointAy){
+            if (greenAY <= pointAy) {
                 invert = false;
             }
 
@@ -155,17 +139,16 @@ public class FocusView extends View {
             greenAX = unitX;
             greenAY = greenAY + 5;
 
-            greenBX = unitX * 3;
             greenBY = greenBY + 5;
 
-            if (greenAY >= pointBy){
+            if (greenAY >= pointBy) {
                 invert = true;
             }
         }
 
 
         //draw animate line
-        canvas.drawLine(greenAX, greenAY, greenAX * 3, greenBY, scanLine);
+        canvas.drawLine(greenAX, greenAY, canvas.getWidth() - unitX, greenBY, scanLine);
 
 
         mPath.addRect(targetRect, Path.Direction.CW);
@@ -184,40 +167,43 @@ public class FocusView extends View {
         }
     }
 
-    private void drawLines(Canvas canvas, float unitX) {
-        //top line
-        float linePointAx = canvas.getWidth() / 2;
-        float linePointAy = canvas.getHeight() / 2 - unitX - (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
+    private void drawLines(Canvas canvas, float unitX,float widthSize) {
+        float halfScreenX = canvas.getWidth() / 2;
+        float halfScreenY = canvas.getHeight() / 2;
 
-        float linePointBx = canvas.getWidth() / 2;
-        float linePointBy = canvas.getHeight() / 2 - unitX + (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
+        //top line
+        float linePointAx = halfScreenX; //ok sempre
+        float linePointAy = halfScreenY - (widthSize / 2) - (unitX / 2);
+
+        float linePointBx = halfScreenX;
+        float linePointBy = linePointAy + unitX;
 
         canvas.drawLine(linePointAx, linePointAy, linePointBx, linePointBy, paint);
 
         //bottom line
-        linePointAx = canvas.getWidth() / 2;
-        linePointAy = canvas.getHeight() / 2 + unitX - (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
+        linePointAx = halfScreenX;
+        linePointAy = halfScreenY + (widthSize / 2) - (unitX / 2);
 
-        linePointBx = canvas.getWidth() / 2;
-        linePointBy = canvas.getHeight() / 2 + unitX + (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
+        linePointBx = halfScreenX;
+        linePointBy = linePointAy + unitX;
 
         canvas.drawLine(linePointAx, linePointAy, linePointBx, linePointBy, paint);
 
         //left line
-        linePointAx = unitX - (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
-        linePointAy = canvas.getHeight() / 2;
+        linePointAx = unitX - (unitX / 2);
+        linePointAy = halfScreenY;
 
-        linePointBx = unitX + (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
-        linePointBy = canvas.getHeight() / 2;
+        linePointBx = unitX + (unitX / 2);
+        linePointBy = halfScreenY;
 
         canvas.drawLine(linePointAx, linePointAy, linePointBx, linePointBy, paint);
 
         //right line
-        linePointAx = canvas.getWidth() - unitX - (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
-        linePointAy = canvas.getHeight() / 2;
+        linePointAx = canvas.getWidth() - (unitX / 2);
+        linePointAy = halfScreenY;
 
-        linePointBx = canvas.getWidth() - unitX + (unitX / SCALE_UNIT_TARGET_MIDDLE_LINE);
-        linePointBy = canvas.getHeight() / 2;
+        linePointBx = canvas.getWidth() - unitX -  (unitX / 2);
+        linePointBy = halfScreenY;
 
         canvas.drawLine(linePointAx, linePointAy, linePointBx, linePointBy, paint);
     }
