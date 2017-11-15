@@ -41,6 +41,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -73,11 +74,10 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
+
     // constants used to pass extra data in the intent
     public boolean autoFocus = false;
     public boolean useFlash = false;
-
-
     public boolean autoLight = false;
 
     private CameraSource mCameraSource;
@@ -92,6 +92,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
     private SensorManager mSensorManager;
     private Sensor mLight;
+    private LinearLayout bottomView;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -109,6 +110,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
         headerText = (TextView) findViewById(R.id.headerText);
         focusView = (FocusView) findViewById(R.id.focusView);
+        bottomView = (LinearLayout) findViewById(R.id.bottomView);
         focusView.startAnimation();
         // read parameters from the intent used to launch the activity.
 //        autoFocus = getIntent().getBooleanExtra(autoFocus, false);
@@ -138,16 +140,21 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         autoLight = false;
     }
 
-    public void scanLineColor(int color){
+    public void scanLineColor(int color) {
         focusView.setScanLineColor(color);
     }
 
-    public void setTargetColor(int color){
+    public void setTargetColor(int color) {
         focusView.setTargetColor(color);
     }
 
-    public void setHeaderText(String text){
+    public void setHeaderText(String text) {
+        headerText.setVisibility(View.VISIBLE);
         headerText.setText(text);
+    }
+
+    public void hideHeaderText() {
+        headerText.setVisibility(View.GONE);
     }
 
     /**
@@ -415,33 +422,36 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
             Log.i("Sensor Changed", "onSensor Change :" + event.values[0]);
             if (event.values[0] < 5 && mCameraSource.getFlashMode() != Camera.Parameters.FLASH_MODE_TORCH) {
-
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-                        mPreview.start(mCameraSource, mGraphicOverlay);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            } else if (event.values[0] > 5 && mCameraSource.getFlashMode() == Camera.Parameters.FLASH_MODE_TORCH){
-                mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        mPreview.start(mCameraSource, mGraphicOverlay);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                activateFlash();
+            } else if (event.values[0] > 5 && mCameraSource.getFlashMode() == Camera.Parameters.FLASH_MODE_TORCH) {
+                deactivedFlash();
             }
         }
+    }
+
+    public boolean isFlashActive() {
+        return mCameraSource.getFlashMode().equals(Camera.Parameters.FLASH_MODE_TORCH);
+    }
+
+    public void deactivedFlash() {
+        mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+    }
+
+    public void activateFlash() {
+        mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    public void setAutoLight(boolean value) {
+        if (value) {
+            mSensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
+        } else {
+            mSensorManager.unregisterListener(this);
+        }
     }
 
     private class CaptureGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -508,5 +518,9 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     @Override
     public void onBarcodeDetected(Barcode barcode) {
         Toast.makeText(this, "insideBarcode", Toast.LENGTH_SHORT).show();
+    }
+
+    public void setBottomView(View view) {
+        bottomView.addView(view);
     }
 }
