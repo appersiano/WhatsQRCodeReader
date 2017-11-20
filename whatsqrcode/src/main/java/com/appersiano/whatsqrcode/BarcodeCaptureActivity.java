@@ -438,7 +438,8 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     }
 
     public void activateFlash() {
-        mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        if (mCameraSource != null)
+            mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
     }
 
     @Override
