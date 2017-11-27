@@ -18,10 +18,8 @@ package com.appersiano.whatsqrcode;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -54,7 +52,6 @@ import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.android.gms.vision.text.Text;
 
 import java.io.IOException;
 
@@ -84,7 +81,6 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     private CameraSourcePreview mPreview;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
     private FocusView focusView;
-    private TextView headerText;
 
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
@@ -93,6 +89,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     private SensorManager mSensorManager;
     private Sensor mLight;
     private LinearLayout bottomView;
+    private LinearLayout topView;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -108,9 +105,10 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
 
-        headerText = (TextView) findViewById(R.id.headerText);
         focusView = (FocusView) findViewById(R.id.focusView);
         bottomView = (LinearLayout) findViewById(R.id.bottomView);
+        topView = (LinearLayout) findViewById(R.id.headerView);
+
         focusView.startAnimation();
         // read parameters from the intent used to launch the activity.
 //        autoFocus = getIntent().getBooleanExtra(autoFocus, false);
@@ -146,15 +144,6 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
     public void setTargetColor(int color) {
         focusView.setTargetColor(color);
-    }
-
-    public void setHeaderText(String text) {
-        headerText.setVisibility(View.VISIBLE);
-        headerText.setText(text);
-    }
-
-    public void hideHeaderText() {
-        headerText.setVisibility(View.GONE);
     }
 
     /**
@@ -523,5 +512,9 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
     public void setBottomView(View view) {
         bottomView.addView(view);
+    }
+
+    public void setTopView(View view) {
+        topView.addView(view);
     }
 }

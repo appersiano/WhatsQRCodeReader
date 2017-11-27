@@ -8,12 +8,11 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
 
-    <TextView
-        android:id="@+id/headerText"
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/headerView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:text="Visit www.wh.com on your computer and scan the QR Code"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -28,7 +27,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerText">
+        app:layout_constraintTop_toBottomOf="@+id/headerView">
 
         <com.appersiano.whatsqrcode.camera.GraphicOverlay
             android:id="@+id/graphicOverlay"
@@ -39,14 +38,14 @@
 
     <com.appersiano.whatsqrcode.FocusView
         android:id="@+id/focusView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/floatingActionButton3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerText" />
+        app:layout_constraintTop_toBottomOf="@+id/headerView" />
 
     <LinearLayout
         android:id="@+id/bottomView"
