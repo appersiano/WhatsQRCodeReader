@@ -14,9 +14,27 @@ class MainActivity : BarcodeCaptureActivity() {
         setAutoLight(true)
         scanLineColor(Color.RED)
         setTargetColor(Color.YELLOW)
-        setHeaderText("This is an example")
 
         addBottomView()
+        addTopView()
+    }
+
+
+    private fun addTopView() {
+        val inflater = LayoutInflater.from(baseContext)
+        val view = inflater.inflate(R.layout.sample_inflate, null)
+        var button = view.findViewById<Button>(R.id.btnLight)
+
+        button.setOnClickListener({ _ ->
+            setAutoLight(false)
+
+            if (isFlashActive) {
+                deactivedFlash()
+            } else {
+                activateFlash()
+            }
+        })
+        setTopView(view)
     }
 
     private fun addBottomView() {
