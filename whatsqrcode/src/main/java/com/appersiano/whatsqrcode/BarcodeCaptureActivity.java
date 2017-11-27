@@ -23,6 +23,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -31,8 +33,10 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -81,6 +85,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     private CameraSourcePreview mPreview;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
     private FocusView focusView;
+    private FloatingActionButton fabTorch;
 
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
@@ -108,6 +113,10 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         focusView = (FocusView) findViewById(R.id.focusView);
         bottomView = (LinearLayout) findViewById(R.id.bottomView);
         topView = (LinearLayout) findViewById(R.id.headerView);
+        fabTorch = (FloatingActionButton) findViewById(R.id.fabTorch);
+        fabTorch.setAlpha(0.25f);
+        fabTorch.setCompatElevation(0);
+        fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
 
         focusView.startAnimation();
         // read parameters from the intent used to launch the activity.
@@ -130,6 +139,40 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 //        Snackbar.make(mGraphicOverlay, "Tap to capture. Pinch/Stretch to zoom",
 //                Snackbar.LENGTH_LONG)
 //                .show();
+
+        fabTorch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                manageFabLight();
+            }
+        });
+    }
+
+    public void manageFabLight() {
+        if (fabTorch != null) {
+            if (isFlashActive()) {
+                fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
+                deactivedFlash();
+            } else {
+                setAutoLight(false);
+                fabTorch.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#66FFFFFF")));
+                activateFlash();
+            }
+        }
+    }
+
+    public void manageFabTorchColor(){
+        if (fabTorch != null) {
+            try {
+                if (isFlashActive()) {
+                    fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
+                } else {
+                    fabTorch.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#66FFFFFF")));
+                }
+            } catch (Exception e){
+                fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
+            }
+        }
     }
 
     public void init() {
@@ -415,6 +458,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
             } else if (event.values[0] > 5 && mCameraSource.getFlashMode() == Camera.Parameters.FLASH_MODE_TORCH) {
                 deactivedFlash();
             }
+            manageFabTorchColor();
         }
     }
 
