@@ -17,6 +17,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        tools:background="@android:color/holo_red_dark"
+        tools:layout_height="40dp"
         tools:text="Visit www.wh.com on your computer and scan the QR Code" />
 
     <com.appersiano.whatsqrcode.camera.CameraSourcePreview
@@ -38,14 +40,12 @@
 
     <com.appersiano.whatsqrcode.FocusView
         android:id="@+id/focusView"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/fabTorch"
+        app:layout_constraintBottom_toTopOf="@+id/bottomView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerView" />
+        app:layout_constraintTop_toTopOf="@+id/preview" />
 
     <LinearLayout
         android:id="@+id/bottomView"
@@ -54,32 +54,24 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        tools:background="@android:color/holo_green_dark"
+        tools:layout_height="40dp">
 
     </LinearLayout>
 
-    <View
-        android:id="@+id/blurlayout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="#A6000000"
-        app:layout_constraintBottom_toBottomOf="@+id/preview"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/focusView" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fabTorch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:src="@drawable/flashlight"
-        app:layout_constraintBottom_toTopOf="@+id/bottomView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    <!--<android.support.design.widget.FloatingActionButton-->
+    <!--android:id="@+id/fabTorch"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginBottom="16dp"-->
+    <!--android:layout_marginEnd="8dp"-->
+    <!--android:layout_marginStart="8dp"-->
+    <!--android:clickable="true"-->
+    <!--android:focusable="true"-->
+    <!--android:src="@drawable/flashlight"-->
+    <!--app:layout_constraintBottom_toTopOf="@+id/bottomView"-->
+    <!--app:layout_constraintEnd_toEndOf="parent"-->
+    <!--app:layout_constraintStart_toStartOf="parent" />-->
 
 </android.support.constraint.ConstraintLayout>
