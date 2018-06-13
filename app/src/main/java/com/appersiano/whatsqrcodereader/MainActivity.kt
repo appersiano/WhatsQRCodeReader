@@ -15,31 +15,27 @@ class MainActivity : BarcodeCaptureActivity() {
         scanLineColor(Color.RED)
         setTargetColor(Color.YELLOW)
 
-        addBottomView()
         addTopView()
+        addBottomView()
     }
 
 
+    /**
+     * Add header on the top of QR Code scanner
+     */
     private fun addTopView() {
         val inflater = LayoutInflater.from(baseContext)
-        val view = inflater.inflate(R.layout.sample_inflate, null)
-        var button = view.findViewById<Button>(R.id.btnLight)
+        val view = inflater.inflate(R.layout.header_inflate, null)
 
-        button.setOnClickListener({ _ ->
-            setAutoLight(false)
-
-            if (isFlashActive) {
-                deactivedFlash()
-            } else {
-                activateFlash()
-            }
-        })
         setTopView(view)
     }
 
+    /**
+     * Add footer on the bottom of QR Code scanner
+     */
     private fun addBottomView() {
         val inflater = LayoutInflater.from(baseContext)
-        val view = inflater.inflate(R.layout.sample_inflate, null)
+        val view = inflater.inflate(R.layout.footer_inflate, null)
         var button = view.findViewById<Button>(R.id.btnLight)
 
         button.setOnClickListener({ _ ->
@@ -54,9 +50,12 @@ class MainActivity : BarcodeCaptureActivity() {
         setBottomView(view)
     }
 
+    /**
+     * When a Barcode is detected this func is triggered
+     */
     override fun onBarcodeDetected(barcode: Barcode?) {
         runOnUiThread {
-            Toast.makeText(this, barcode!!.displayValue, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, barcode!!.displayValue, Toast.LENGTH_SHORT).show()
         }
     }
 }

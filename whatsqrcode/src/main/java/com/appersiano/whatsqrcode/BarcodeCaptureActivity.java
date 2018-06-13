@@ -17,7 +17,6 @@ package com.appersiano.whatsqrcode;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -30,11 +29,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -44,7 +44,6 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.appersiano.whatsqrcode.camera.CameraSource;
@@ -67,34 +66,28 @@ import java.io.IOException;
 public abstract class BarcodeCaptureActivity extends AppCompatActivity implements BarcodeGraphicTracker.BarcodeUpdateListener, SensorEventListener {
 
     public static final String BarcodeObject = "Barcode";
-
+    // permission request codes need to be < 256
+    public static final int RC_HANDLE_CAMERA_PERM = 2;
     private static final String TAG = "Barcode-reader";
-
     // intent request code to handle updating play services if needed.
     private static final int RC_HANDLE_GMS = 9001;
-
-    // permission request codes need to be < 256
-    private static final int RC_HANDLE_CAMERA_PERM = 2;
-
     // constants used to pass extra data in the intent
     public boolean autoFocus = false;
     public boolean useFlash = false;
     public boolean autoLight = false;
-
+    public LinearLayout bottomView;
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
     private FocusView focusView;
     private FloatingActionButton fabTorch;
-
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
-
     private SensorManager mSensorManager;
     private Sensor mLight;
-    private LinearLayout bottomView;
     private LinearLayout topView;
+    protected boolean isOperational;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -107,16 +100,16 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
-        mPreview = (CameraSourcePreview) findViewById(R.id.preview);
-        mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
+        mPreview = findViewById(R.id.preview);
+        mGraphicOverlay = findViewById(R.id.graphicOverlay);
 
-        focusView = (FocusView) findViewById(R.id.focusView);
-        bottomView = (LinearLayout) findViewById(R.id.bottomView);
-        topView = (LinearLayout) findViewById(R.id.headerView);
-        fabTorch = (FloatingActionButton) findViewById(R.id.fabTorch);
-        fabTorch.setAlpha(0.25f);
-        fabTorch.setCompatElevation(0);
-        fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
+        focusView = findViewById(R.id.focusView);
+        bottomView = findViewById(R.id.bottomView);
+        topView = findViewById(R.id.headerView);
+//        fabTorch = findViewById(R.id.fabTorch);
+//        fabTorch.setAlpha(0.25f);
+//        fabTorch.setCompatElevation(0);
+//        fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
 
         focusView.startAnimation();
         // read parameters from the intent used to launch the activity.
@@ -126,12 +119,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
-        int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (rc == PackageManager.PERMISSION_GRANTED) {
-            createCameraSource(autoFocus, useFlash);
-        } else {
-            requestCameraPermission();
-        }
+
 
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         //scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
@@ -140,12 +128,21 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
 //                Snackbar.LENGTH_LONG)
 //                .show();
 
-        fabTorch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                manageFabLight();
-            }
-        });
+//        fabTorch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                manageFabLight();
+//            }
+//        });
+    }
+
+    public void checkCameraPermissions() {
+        int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+            createCameraSource(autoFocus, useFlash);
+        } else {
+            requestCameraPermissions();
+        }
     }
 
     public void manageFabLight() {
@@ -161,7 +158,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         }
     }
 
-    public void manageFabTorchColor(){
+    public void manageFabTorchColor() {
         if (fabTorch != null) {
             try {
                 if (isFlashActive()) {
@@ -169,7 +166,7 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
                 } else {
                     fabTorch.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#66FFFFFF")));
                 }
-            } catch (Exception e){
+            } catch (Exception e) {
                 fabTorch.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(getBaseContext(), android.R.color.transparent)));
             }
         }
@@ -194,32 +191,11 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
      * showing a "Snackbar" message of why the permission is needed then
      * sending the request.
      */
-    private void requestCameraPermission() {
+    private void requestCameraPermissions() {
         Log.w(TAG, "Camera permission is not granted. Requesting permission");
-
         final String[] permissions = new String[]{Manifest.permission.CAMERA};
-
-        if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(this, permissions, RC_HANDLE_CAMERA_PERM);
-            return;
-        }
-
-        final Activity thisActivity = this;
-
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ActivityCompat.requestPermissions(thisActivity, permissions,
-                        RC_HANDLE_CAMERA_PERM);
-            }
-        };
-
-        findViewById(R.id.topLayout).setOnClickListener(listener);
-        Snackbar.make(mGraphicOverlay, "R.string.permission_camera_rationale",
-                Snackbar.LENGTH_INDEFINITE)
-                .setAction(android.R.string.ok, listener)
-                .show();
+        ActivityCompat.requestPermissions(this, permissions,
+                RC_HANDLE_CAMERA_PERM);
     }
 
     @Override
@@ -241,16 +217,20 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
      * the constant.
      */
     @SuppressLint("InlinedApi")
-    private void createCameraSource(boolean autoFocus, boolean useFlash) {
+    public void createCameraSource(boolean autoFocus, boolean useFlash) {
         Context context = getApplicationContext();
 
         // A barcode detector is created to track barcodes.  An associated multi-processor instance
         // is set to receive the barcode detection results, track the barcodes, and maintain
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
         BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, BarcodeCaptureActivity.this);
         barcodeDetector.setProcessor(new MultiProcessor.Builder<>(barcodeFactory).build());
+
+        isOperational = barcodeDetector.isOperational();
 
         if (!barcodeDetector.isOperational()) {
             // Note: The first time that an app using the barcode or face API is installed on a
@@ -262,6 +242,8 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
             // isOperational() can be used to check if the required native libraries are currently
             // available.  The detectors will automatically become operational once the library
             // downloads complete on device.
+            Toast.makeText(this,"There is a problem scanning the code, " +
+                    "please enter the code manually", Toast.LENGTH_SHORT).show();
             Log.w(TAG, "Detector dependencies are not yet available.");
 
             // Check for low storage.  If there is low storage, the native library will not be
@@ -347,6 +329,8 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
      *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
      * @see #requestPermissions(String[], int)
      */
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -362,6 +346,11 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
             // we have permission, so create the camerasource
             createCameraSource(autoFocus, useFlash);
             return;
+        } else if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        } else {
+            // Go to application settings
+            goToApplicationSettings();
         }
 
         Log.e(TAG, "Permission not granted: results len = " + grantResults.length +
@@ -406,13 +395,14 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         }
     }
 
-    /**
-     * onTap returns the tapped barcode result to the calling Activity.
-     *
-     * @param rawX - the raw position of the tap
-     * @param rawY - the raw position of the tap.
-     * @return true if the activity is ending.
-     */
+
+    private void goToApplicationSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", getPackageName(), null));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivityForResult(intent, RC_HANDLE_CAMERA_PERM);
+    }
+
     private boolean onTap(float rawX, float rawY) {
         // Find tap point in preview frame coordinates.
         int[] location = new int[2];
@@ -452,18 +442,26 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
-            Log.i("Sensor Changed", "onSensor Change :" + event.values[0]);
-            if (event.values[0] < 5 && mCameraSource.getFlashMode() != Camera.Parameters.FLASH_MODE_TORCH) {
-                activateFlash();
-            } else if (event.values[0] > 5 && mCameraSource.getFlashMode() == Camera.Parameters.FLASH_MODE_TORCH) {
-                deactivedFlash();
+            try {
+                Log.i("Sensor Changed", "onSensor Change :" + event.values[0]);
+                if (event.values[0] < 5 && mCameraSource.getFlashMode() != Camera.Parameters.FLASH_MODE_TORCH) {
+                    activateFlash();
+                } else if (event.values[0] > 5 && mCameraSource.getFlashMode() == Camera.Parameters.FLASH_MODE_TORCH) {
+                    deactivedFlash();
+                }
+                manageFabTorchColor();
+
+            } catch (Exception e) {
+                Log.d(TAG, e.getMessage());
             }
-            manageFabTorchColor();
         }
     }
 
     public boolean isFlashActive() {
-        return mCameraSource.getFlashMode().equals(Camera.Parameters.FLASH_MODE_TORCH);
+        if (mCameraSource != null && mCameraSource.getFlashMode() != null) {
+            return mCameraSource.getFlashMode().equals(Camera.Parameters.FLASH_MODE_TORCH);
+        }
+        return false;
     }
 
     public void deactivedFlash() {
@@ -486,6 +484,19 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         } else {
             mSensorManager.unregisterListener(this);
         }
+    }
+
+    @Override
+    public void onBarcodeDetected(Barcode barcode) {
+        Toast.makeText(this, "insideBarcode", Toast.LENGTH_SHORT).show();
+    }
+
+    public void setBottomView(View view) {
+        bottomView.addView(view);
+    }
+
+    public void setTopView(View view) {
+        topView.addView(view);
     }
 
     private class CaptureGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -547,18 +558,5 @@ public abstract class BarcodeCaptureActivity extends AppCompatActivity implement
         public void onScaleEnd(ScaleGestureDetector detector) {
             mCameraSource.doZoom(detector.getScaleFactor());
         }
-    }
-
-    @Override
-    public void onBarcodeDetected(Barcode barcode) {
-        Toast.makeText(this, "insideBarcode", Toast.LENGTH_SHORT).show();
-    }
-
-    public void setBottomView(View view) {
-        bottomView.addView(view);
-    }
-
-    public void setTopView(View view) {
-        topView.addView(view);
     }
 }
